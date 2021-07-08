@@ -1,3 +1,4 @@
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,12 +11,16 @@ public class MainManager : MonoBehaviour
     public int LineCount = 6;
     public Rigidbody Ball;
 
+    public Text highestScoreText;
     public Text ScoreText;
     public GameObject GameOverText;
-    
+
+    private string higestScoreFileName = "DPP_HighestScore.txt";
     private bool m_Started = false;
     private int m_Points;
-    
+
+    private int m_HighestScore;
+
     private bool m_GameOver = false;
 
     
@@ -36,6 +41,7 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        LoadHighestScore();
     }
 
     private void Update()
@@ -51,6 +57,7 @@ public class MainManager : MonoBehaviour
 
                 Ball.transform.SetParent(null);
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+                LoadHighestScore();
             }
         }
         else if (m_GameOver)
@@ -58,6 +65,7 @@ public class MainManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                LoadHighestScore();
             }
         }
     }
@@ -65,12 +73,33 @@ public class MainManager : MonoBehaviour
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = $"Score: {m_Points}";
     }
 
     public void GameOver()
     {
+        if (m_Points > m_HighestScore)
+            m_HighestScore = m_Points;
+        SaveHighestScore();
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
+
+    void SaveHighestScore()
+    {
+        File.WriteAllText(Path.Combine(Application.persistentDataPath, higestScoreFileName), m_HighestScore.ToString());
+    }
+    void LoadHighestScore()
+    {
+        string path = Path.Combine(Application.persistentDataPath, higestScoreFileName);
+        m_HighestScore = 0;
+        if (File.Exists(path))
+        {
+            string scoreText = File.ReadAllText(path);
+            if (!string.IsNullOrEmpty(scoreText))
+                int.TryParse(scoreText, out m_HighestScore);
+        }
+        highestScoreText.text = $"Highest Score: {m_HighestScore}";
+    }
+
 }
